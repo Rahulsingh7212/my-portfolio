@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Real-time Data Insights</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1e293b;
+            --bg-secondary: #0f172a;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .logo {
+            padding: 0 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-title {
+            padding: 0 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar.collapsed .nav-title {
+            display: none;
+        }
+
+        .nav-item {
+            padding: 0.875rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--primary);
+        }
+
+        .nav-item i {
+            font-size: 1.25rem;
+            width: 24px;
+        }
+
+        .sidebar.collapsed .nav-item span {
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 80px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--bg-secondary);
+        }
+
+        .header-title h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .header-title p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .date-range-picker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .date-range-picker:hover {
+            border-color: var(--primary);
+        }
+
+        .date-range-picker input {
+            border: none;
+            background: none;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .refresh-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-dark);
+            transform: rotate(180deg);
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-profile:hover {
+            background: var(--bg-primary);
+            box-shadow: var(--shadow);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--stat-color, var(--primary));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-info h3 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--icon-bg, rgba(99, 102, 241, 0.1));
+            color: var(--stat-color, var(--primary));
+        }
+
+        .stat-footer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .stat-change.positive {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        /* Chart Containers */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-card.large {
+            grid-column: span 8;
+        }
+
+        .chart-card.medium {
+            grid-column: span 6;
+        }
+
+        .chart-card.small {
+            grid-column: span 4;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .chart-btn:hover,
+        .chart-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        .chart-container.small-chart {
+            height: 250px;
+        }
+
+        /* Data Table */
+        .table-card {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .status-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Real-time indicator */
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Export Menu */
+        .export-menu {
+            position: relative;
+        }
+
+        .export-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+        }
+
+        .export-dropdown.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .export-option {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-primary);
+        }
+
+        .export-option:hover {
+            background: var(--bg-secondary);
+        }
+
+        .export-option:first-child {
+            border-radius: 10px 10px 0 0;
+        }
+
+        .export-option:last-child {
+            border-radius: 0 0 10px 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .chart-card.large,
+            .chart-card.medium,
+            .chart-card.small {
+                grid-column: span 12;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .main-content.expanded {
+                margin-left: 0;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .header-right {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .table-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-chart-line"></i>
+            <span class="logo-text">Analytics</span>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Main</div>
+            <div class="nav-item active">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item" onclick="window.location.href='reports.html'">
+                <i class="fas fa-file-alt"></i>
+                <span>Reports</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analytics</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Data</div>
+            <div class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Sales</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Settings</div>
+            <div class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-question-circle"></i>
+                <span>Help</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Analytics Dashboard</h1>
+                    <p>Real-time data insights and reporting</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    Live Data
+                </div>
+                <div class="date-range-picker">
+                    <i class="fas fa-calendar"></i>
+                    <input type="date" id="dateFrom" value="2024-01-01">
+                    <span>to</span>
+                    <input type="date" id="dateTo">
+                </div>
+                <button class="refresh-btn tooltip" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    <span class="tooltiptext">Refresh Data</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar">JD</div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">John Doe</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Admin</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card" style="--stat-color: var(--primary); --icon-bg: rgba(99, 102, 241, 0.1)">
+                <div class="stat-header">
+                    <div class="stat-info">
+                        <h3>Total Revenue</h3>
+                        <div class="stat-value">$<span id="totalRevenue">0</span></div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="revenueChange">12.5%</span>
+                    </span>
+                    <span class="stat-label">vs last month</span>
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--success); --icon-bg: rgba(16, 185, 129, 0.1)">
+                <div class="stat-header">
+                    <div class="stat-info">
+                        <h3>Total Orders</h3>
+                        <div class="stat-value"><span id="totalOrders">0</span></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success)">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="ordersChange">8.3%</span>
+                    </span>
+                    <span class="stat-label">vs last month</span>
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--warning); --icon-bg: rgba(245, 158, 11, 0.1)">
+                <div class="stat-header">
+                    <div class="stat-info">
+                        <h3>Active Users</h3>
+                        <div class="stat-value"><span id="activeUsers">0</span></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning)">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="usersChange">15.7%</span>
+                    </span>
+                    <span class="stat-label">vs last month</span>
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--info); --icon-bg: rgba(59, 130, 246, 0.1)">
+                <div class="stat-header">
+                    <div class="stat-info">
+                        <h3>Conversion Rate</h3>
+                        <div class="stat-value"><span id="conversionRate">0</span>%</div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--info)">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        <span id="conversionChange">2.1%</span>
+                    </span>
+                    <span class="stat-label">vs last month</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- Revenue Chart -->
+            <div class="chart-card large">
+                <div class="chart-header">
+                    <h3 class="chart-title">Revenue Overview</h3>
+                    <div class="chart-actions">
+                        <button class="chart-btn active" onclick="updatePeriod('week')">Week</button>
+                        <button class="chart-btn" onclick="updatePeriod('month')">Month</button>
+                        <button class="chart-btn" onclick="updatePeriod('year')">Year</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Traffic Sources -->
+            <div class="chart-card small">
+                <div class="chart-header">
+                    <h3 class="chart-title">Traffic Sources</h3>
+                </div>
+                <div class="chart-container small-chart">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Sales by Category -->
+            <div class="chart-card medium">
+                <div class="chart-header">
+                    <h3 class="chart-title">Sales by Category</h3>
+                </div>
+                <div class="chart-container small-chart">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- User Growth -->
+            <div class="chart-card medium">
+                <div class="chart-header">
+                    <h3 class="chart-title">User Growth</h3>
+                </div>
+                <div class="chart-container small-chart">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3 class="chart-title">Recent Transactions</h3>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search transactions...">
+                    </div>
+                    <div class="export-menu">
+                        <button class="btn btn-secondary" id="exportBtn">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                        <div class="export-dropdown" id="exportDropdown">
+                            <div class="export-option" onclick="exportData('csv')">
+                                <i class="fas fa-file-csv"></i>
+                                Export as CSV
+                            </div>
+                            <div class="export-option" onclick="exportData('excel')">
+                                <i class="fas fa-file-excel"></i>
+                                Export as Excel
+                            </div>
+                            <div class="export-option" onclick="exportData('pdf')">
+                                <i class="fas fa-file-pdf"></i>
+                                Export as PDF
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-filter"></i>
+                        Filter
+                    </button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTable"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // Set today's date as default
+        document.getElementById('dateTo').value = new Date().toISOString().split('T')[0];
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        let isDark = false;
+
+        // Check saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            body.setAttribute('data-theme', 'dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            isDark = true;
+        }
+
+        themeToggle.addEventListener('click', () => {
+            isDark = !isDark;
+            if (isDark) {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.removeAttribute('data-theme');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('theme', 'light');
+            }
+            updateChartColors();
+        });
+
+        // Sidebar Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
+
+        // Mobile sidebar
+        if (window.innerWidth <= 768) {
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+        }
+
+        // Export Dropdown
+        const exportBtn = document.getElementById('exportBtn');
+        const exportDropdown = document.getElementById('exportDropdown');
+
+        exportBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', () => {
+            exportDropdown.classList.remove('active');
+        });
+
+        // Generate Random Data
+        function generateRandomData(count, min, max) {
+            return Array.from({ length: count }, () => 
+                Math.floor(Math.random() * (max - min + 1)) + min
+            );
+        }
+
+        // Animate Numbers
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value.toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Update Stats
+        function updateStats() {
+            animateValue(document.getElementById('totalRevenue'), 0, 124563, 2000);
+            animateValue(document.getElementById('totalOrders'), 0, 3842, 2000);
+            animateValue(document.getElementById('activeUsers'), 0, 12847, 2000);
+            animateValue(document.getElementById('conversionRate'), 0, 3.8, 2000);
+        }
+
+        // Chart Colors
+        function getChartColors() {
+            return {
+                primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
+                success: getComputedStyle(document.documentElement).getPropertyValue('--success').trim(),
+                warning: getComputedStyle(document.documentElement).getPropertyValue('--warning').trim(),
+                danger: getComputedStyle(document.documentElement).getPropertyValue('--danger').trim(),
+                info: getComputedStyle(document.documentElement).getPropertyValue('--info').trim(),
+                textPrimary: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+                textSecondary: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+                border: getComputedStyle(document.documentElement).getPropertyValue('--border').trim()
+            };
+        }
+
+        let charts = {};
+
+        // Revenue Chart
+        function createRevenueChart() {
+            const colors = getChartColors();
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            charts.revenue = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [12000, 19000, 15000, 25000, 22000, 30000, 28000, 35000, 32000, 40000, 38000, 45000],
+                        borderColor: colors.primary,
+                        backgroundColor: `${colors.primary}20`,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: colors.primary,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }, {
+                        label: 'Expenses',
+                        data: [8000, 12000, 10000, 15000, 14000, 18000, 17000, 20000, 19000, 22000, 21000, 24000],
+                        borderColor: colors.danger,
+                        backgroundColor: `${colors.danger}20`,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: colors.danger,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: colors.textPrimary,
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: colors.border,
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.border,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: colors.textSecondary,
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.textSecondary
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // Traffic Sources Chart
+        function createTrafficChart() {
+            const colors = getChartColors();
+            const ctx = document.getElementById('trafficChart').getContext('2d');
+            
+            charts.traffic = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Organic', 'Direct', 'Social', 'Referral', 'Email'],
+                    datasets: [{
+                        data: [35, 25, 20, 12, 8],
+                        backgroundColor: [
+                            colors.primary,
+                            colors.success,
+                            colors.warning,
+                            colors.info,
+                            colors.danger
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: colors.textPrimary,
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Category Chart
+        function createCategoryChart() {
+            const colors = getChartColors();
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            charts.category = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Electronics', 'Clothing', 'Food', 'Books', 'Sports', 'Home'],
+                    datasets: [{
+                        label: 'Sales',
+                        data: [45000, 32000, 28000, 18000, 15000, 12000],
+                        backgroundColor: [
+                            colors.primary,
+                            colors.success,
+                            colors.warning,
+                            colors.info,
+                            colors.danger,
+                            colors.primary
+                        ],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.border
+                            },
+                            ticks: {
+                                color: colors.textSecondary,
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.textSecondary
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // User Growth Chart
+        function createUserGrowthChart() {
+            const colors = getChartColors();
+            const ctx = document.getElementById('userGrowthChart').getContext('2d');
+            
+            charts.userGrowth = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                    datasets: [{
+                        label: 'New Users',
+                        data: [120, 195, 250, 310, 385, 450],
+                        borderColor: colors.success,
+                        backgroundColor: `${colors.success}20`,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: colors.success,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.border
+                            },
+                            ticks: {
+                                color: colors.textSecondary
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.textSecondary
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Chart Colors
+        function updateChartColors() {
+            Object.values(charts).forEach(chart => chart.destroy());
+            createRevenueChart();
+            createTrafficChart();
+            createCategoryChart();
+            createUserGrowthChart();
+        }
+
+        // Generate Transactions
+        function generateTransactions() {
+            const customers = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Williams', 'Tom Brown'];
+            const products = ['Laptop Pro', 'Smart Watch', 'Wireless Headphones', 'Tablet', 'Camera'];
+            const statuses = ['active', 'pending', 'inactive'];
+            const statusLabels = ['Completed', 'Pending', 'Cancelled'];
+            
+            const tbody = document.getElementById('transactionsTable');
+            let html = '';
+            
+            for (let i = 1; i <= 10; i++) {
+                const statusIndex = Math.floor(Math.random() * 3);
+                const date = new Date();
+                date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+                
+                html += `
+                    <tr>
+                        <td>#TXN-${String(i).padStart(4, '0')}</td>
+                        <td>${customers[Math.floor(Math.random() * customers.length)]}</td>
+                        <td>${products[Math.floor(Math.random() * products.length)]}</td>
+                        <td>$${(Math.random() * 1000 + 100).toFixed(2)}</td>
+                        <td><span class="status-badge status-${statuses[statusIndex]}">${statusLabels[statusIndex]}</span></td>
+                        <td>${date.toLocaleDateString()}</td>
+                    </tr>
+                `;
+            }
+            
+            tbody.innerHTML = html;
+        }
+
+        // Search Functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#transactionsTable tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Export Data
+        function exportData(format) {
+            alert(`Exporting data as ${format.toUpperCase()}...`);
+            exportDropdown.classList.remove('active');
+            
+            // Simulate export
+            const btn = document.getElementById('exportBtn');
+            btn.innerHTML = '<span class="loading"></span> Exporting...';
+            
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-download"></i> Export';
+                alert('Export completed successfully!');
+            }, 2000);
+        }
+
+        // Update Period
+        function updatePeriod(period) {
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update chart data based on period
+            // This is a simplified example
+            alert(`Updating data for ${period} view`);
+        }
+
+        // Refresh Data
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            this.querySelector('i').style.animation = 'spin 1s linear';
+            
+            setTimeout(() => {
+                updateStats();
+                generateTransactions();
+                this.querySelector('i').style.animation = '';
+            }, 1000);
+        });
+
+        // Real-time Updates
+        function simulateRealTimeUpdates() {
+            setInterval(() => {
+                // Update a random stat
+                const stats = ['totalRevenue', 'totalOrders', 'activeUsers'];
+                const randomStat = stats[Math.floor(Math.random() * stats.length)];
+                const element = document.getElementById(randomStat);
+                const currentValue = parseInt(element.textContent.replace(/,/g, ''));
+                const newValue = currentValue + Math.floor(Math.random() * 100);
+                element.textContent = newValue.toLocaleString();
+            }, 5000);
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            createRevenueChart();
+            createTrafficChart();
+            createCategoryChart();
+            createUserGrowthChart();
+            updateStats();
+            generateTransactions();
+            simulateRealTimeUpdates();
+        });
+    </script>
+</body>
+</html>
